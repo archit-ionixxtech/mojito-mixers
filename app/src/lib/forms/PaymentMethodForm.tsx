@@ -2,7 +2,7 @@ import { Control, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { boolean, object, string, ValidationError } from "yup";
 import { ObjectShape } from "yup/lib/object";
-import { Grid, Box, Typography, Link } from "@mui/material";
+import { Grid, Box, Typography } from "@mui/material";
 import BookIcon from "@mui/icons-material/Book";
 import React, { useCallback, useMemo } from "react";
 import { getCardNumberError } from "react-payment-inputs";
@@ -16,6 +16,8 @@ import { InputGroupLabel } from "../components/shared/InputGroupLabel/InputGroup
 import { SecondaryButton } from "../components/shared/SecondaryButton/SecondaryButton";
 import { PaymentMethodSelector } from "../components/shared/PaymentMethodSelector/PaymentMethodSelector";
 import { PaymentMethod, PaymentType } from "../domain/payment/payment.interfaces";
+import { ControlledCountrySelector } from "../components/shared/Select/CountrySelector/CountrySelector";
+
 import {
   CONSENT_ERROR_MESSAGE,
   requireSchemaWhenKeyIs,
@@ -45,9 +47,9 @@ import { FormErrorsCaption } from "../components/shared/FormErrorCaption/FormErr
 import { CheckoutItem } from "../domain/product/product.interfaces";
 import { useLimits } from "../hooks/useLimits";
 import { Market } from "../components/public/CheckoutOverlay/CheckoutOverlay";
-import { ConnectedWalletItem } from "../components/payments/ConnectedWalletItem/ConnectedWalletItem";
-import { InfoBox } from "../components/payments/InfoBox/InfoBox";
-import { ErrorBox } from "../components/payments/ErrorBox/ErrorBox";
+// import { ConnectedWalletItem } from "../components/payments/ConnectedWalletItem/ConnectedWalletItem";
+// import { InfoBox } from "../components/payments/InfoBox/InfoBox";
+// import { ErrorBox } from "../components/payments/ErrorBox/ErrorBox";
 
 interface PaymentTypeFormProps {
   control: Control<PaymentMethod & { consent: boolean }>;
@@ -69,6 +71,8 @@ const FIELD_LABELS = {
   nameOnCard: "Name on Card",
   accountNumber: "Account Number",
   routingNumber: "Routing Number (ABA)",
+  bankName: "Bank Name",
+  bankCountry: "Bank Country",
 };
 
 const FIELD_NAMES = Object.keys(FIELD_LABELS);
@@ -181,41 +185,41 @@ const PAYMENT_TYPE_FORM_DATA: Record<PaymentType, PaymentTypeFormData> = {
       <>
         <ControlledCardNumberField
           name="cardNumber"
-          control={ control }
-          label={ FIELD_LABELS.cardNumber } />
+          control={control}
+          label={FIELD_LABELS.cardNumber} />
 
         <Grid
           container
-          columnSpacing={ 2 }
+          columnSpacing={2}
           direction={{
             xs: "column",
             sm: "row",
           }}>
-          <Grid item sm={ 6 } zeroMinWidth>
+          <Grid item sm={6} zeroMinWidth>
             <ControlledCardExpiryDateField
               name="expiryDate"
-              control={ control }
-              label={ FIELD_LABELS.expiryDate } />
+              control={control}
+              label={FIELD_LABELS.expiryDate} />
           </Grid>
-          <Grid item sm={ 6 }>
+          <Grid item sm={6}>
             <ControlledCardSecureCodeField
               name="secureCode"
-              control={ control }
-              label={ cvvLabel } />
+              control={control}
+              label={cvvLabel} />
           </Grid>
         </Grid>
 
         <ControlledTextField
           name="nameOnCard"
-          control={ control }
-          label={ FIELD_LABELS.nameOnCard } />
+          control={control}
+          label={FIELD_LABELS.nameOnCard} />
 
-        { consentType === "checkbox" && (
+        {consentType === "checkbox" && (
           <ControlledCheckbox
             name="consent"
-            control={ control }
-            label={ <>I <ConsentText /></> } />
-        ) }
+            control={control}
+            label={<>I <ConsentText /></>} />
+        )}
       </>
     ),
   },
@@ -235,12 +239,12 @@ const PAYMENT_TYPE_FORM_DATA: Record<PaymentType, PaymentTypeFormData> = {
           </Typography>
         </DisplayBox>
 
-        { consentType === "checkbox" && (
+        {consentType === "checkbox" && (
           <ControlledCheckbox
             name="consent"
-            control={ control }
-            label={ <>I <ConsentText /></> } />
-        ) }
+            control={control}
+            label={<>I <ConsentText /></>} />
+        )}
       </>
     ),
   },
@@ -249,6 +253,8 @@ const PAYMENT_TYPE_FORM_DATA: Record<PaymentType, PaymentTypeFormData> = {
       type: "Wire",
       accountNumber: "",
       routingNumber: "",
+      bankName: "",
+      bankCountry: {},
       consent: consentType !== "checkbox",
     }),
     schemaShape: () => ({
@@ -258,31 +264,49 @@ const PAYMENT_TYPE_FORM_DATA: Record<PaymentType, PaymentTypeFormData> = {
       routingNumber: string()
         .label(FIELD_LABELS.routingNumber)
         .when("type", isWireThenRequireSchema),
+      bankName: string()
+        .label(FIELD_LABELS.bankName)
+        .when("type", isWireThenRequireSchema),
+      bankCountry: object()
+        .default({})
+        .shape({
+          value: string()
+            .label(FIELD_LABELS.bankCountry)
+            .when("type", isWireThenRequireSchema),
+        }),
     }),
     fields: ({ control, consentType, dictionary }) => (
       <>
         <ControlledTextField
           name="accountNumber"
-          control={ control }
-          label={ FIELD_LABELS.accountNumber } />
+          control={control}
+          label={FIELD_LABELS.accountNumber} />
 
         <ControlledTextField
           name="routingNumber"
-          control={ control }
-          label={ FIELD_LABELS.routingNumber } />
+          control={control}
+          label={FIELD_LABELS.routingNumber} />
+        <ControlledTextField
+          name="bankName"
+          control={control}
+          label={FIELD_LABELS.bankName} />
+        <ControlledCountrySelector
+          name="bankCountry"
+          control={control}
+          label={FIELD_LABELS.bankCountry} />
 
-        { consentType === "checkbox" && (
+        {consentType === "checkbox" && (
           <ControlledCheckbox
             name="consent"
-            control={ control }
-            label={ <>I <ConsentText /></> } />
-        ) }
+            control={control}
+            label={<>I <ConsentText /></>} />
+        )}
 
         <DisplayBox sx={{ mt: 1.5 }}>
-          { dictionary.wirePaymentsDisclaimer.map((line, i) => (
+          {dictionary.wirePaymentsDisclaimer.map((line, i) => (
             // eslint-disable-next-line react/no-array-index-key
-            <Typography key={ i } variant="body1" sx={ i === 0 ? undefined : { mt: 1.5 } }>{ line }</Typography>
-          )) }
+            <Typography key={i} variant="body1" sx={i === 0 ? undefined : { mt: 1.5 }}>{line}</Typography>
+          ))}
         </DisplayBox>
       </>
     ),
@@ -292,40 +316,26 @@ const PAYMENT_TYPE_FORM_DATA: Record<PaymentType, PaymentTypeFormData> = {
       type: "Crypto",
       consent: consentType !== "checkbox",
     }),
-    schemaShape: () => ({}),
+    schemaShape: () => ({
+      type: string(),
+      consent: string(),
+    }),
     fields: ({ control, consentType }) => (
       <>
-        <ConnectedWalletItem
-          boxProps={{ sx: { mt: 1.5, mb: consentType === "checkbox" ? 1 : 0 } }}
-          address="0xb794f5ea0ba39494ce839613fffba74279579268"
-          status="connected"
-          balance={{ WETH: 1.2, ETH: 1.2 }} />
+        <DisplayBox sx={{ mt: 1.5, mb: consentType === "checkbox" ? 1 : 0 }}>
+          <Typography variant="body1">
+            We use Coinbase to connect to your wallet.
 
-        { !!window && (
-          <ErrorBox sx={{ mt: 2, mb: consentType === "checkbox" ? 1 : 0 }}>
-            <Typography>
-              Your connected wallet currently does not have enough [WETH|WMATIC] to complete your purchase.{ " " }
-              <Link href="https://support.opensea.io/hc/en-us/articles/360063498293-What-s-WETH-How-do-I-get-it-/" target="_blank" rel="noopener noreferrer">
-                How do I get [WETH|WMATIC]?
-              </Link>
-            </Typography>
-          </ErrorBox>
-        ) }
 
-        { !!window && (
-          <InfoBox sx={{ mt: 2, mb: consentType === "checkbox" ? 1 : 0 }}>
-            <Typography>
-              Only Cryptocurrency is accepted for secondary sales
-            </Typography>
-          </InfoBox>
-        ) }
+          </Typography>
+        </DisplayBox>
 
-        { consentType === "checkbox" && (
+        {consentType === "checkbox" && (
           <ControlledCheckbox
             name="consent"
-            control={ control }
-            label={ <>I <ConsentText /></> } />
-        ) }
+            control={control}
+            label={<>I <ConsentText /></>} />
+        )}
       </>
     ),
   },
@@ -343,12 +353,12 @@ const PAYMENT_TYPE_FORM_DATA: Record<PaymentType, PaymentTypeFormData> = {
           </Typography>
         </DisplayBox>
 
-        { consentType === "checkbox" && (
+        {consentType === "checkbox" && (
           <ControlledCheckbox
             name="consent"
-            control={ control }
-            label={ <>I <ConsentText /></> } />
-        ) }
+            control={control}
+            label={<>I <ConsentText /></>} />
+        )}
       </>
     ),
   },
@@ -460,7 +470,7 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
       const isFormValid = await trigger();
 
       if (!isFormValid) {
-        // This will make the validation errors appear:
+        // // This will make the validation errors appear:
         submitForm(e);
 
         return;
@@ -485,72 +495,72 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
   const showPlaidError = selectedPaymentMethod === "ACH" && !!plaidError;
 
   return (
-    <form onSubmit={ handleFormSubmit }>
-      { onSaved && (
+    <form onSubmit={handleFormSubmit}>
+      {onSaved && (
         <Box sx={{ my: 2.5 }}>
-          <SecondaryButton onClick={ onSaved } startIcon={ <BookIcon /> }>
+          <SecondaryButton onClick={onSaved} startIcon={<BookIcon />}>
             Use Saved Payment Method
           </SecondaryButton>
         </Box>
-      ) }
+      )}
 
-      { acceptsManyPaymentMethods && (
+      {acceptsManyPaymentMethods && (
         <>
           <InputGroupLabel sx={{ m: 0, pt: 2, pb: 1.5 }}>Payment Method</InputGroupLabel>
 
           <PaymentMethodSelector
-            marketType={ marketType }
-            selectedPaymentMethod={ selectedPaymentMethod }
-            onPaymentMethodChange={ handleSelectedPaymentMethodChange }
-            paymentMethods={ acceptedPaymentTypes } />
+            marketType={marketType}
+            selectedPaymentMethod={selectedPaymentMethod}
+            onPaymentMethodChange={handleSelectedPaymentMethodChange}
+            paymentMethods={acceptedPaymentTypes} />
         </>
-      ) }
+      )}
 
-      { addSpacing && !limitExceededMessage ? (
+      {addSpacing && !limitExceededMessage ? (
         <Box sx={{ mt: 1 }} />
-      ) : null }
+      ) : null}
 
-      { limitExceededMessage ? (
+      {limitExceededMessage ? (
         <DisplayBox sx={{ mt: addSpacing ? 1 : 0, mb: 2.5 }}>
           <Typography sx={{ fontWeight: "500" }}>
-            { limitExceededMessage }
+            {limitExceededMessage}
           </Typography>
         </DisplayBox>
-      ) : null }
+      ) : null}
 
-      { /* TODO: Separate in FormFragment or FormFields components instead of object for the rendering part: */ }
+      { /* TODO: Separate in FormFragment or FormFields components instead of object for the rendering part: */}
 
       <Fields
-        control={ control }
-        cvvLabel={ cvvLabel }
-        consentType={ consentType }
-        dictionary={ dictionary } />
+        control={control}
+        cvvLabel={cvvLabel}
+        consentType={consentType}
+        dictionary={dictionary} />
 
-      { checkoutErrorMessage && <FormErrorsBox error={ checkoutErrorMessage } sx={{ mt: 5 }} /> }
+      {checkoutErrorMessage && <FormErrorsBox error={checkoutErrorMessage} sx={{ mt: 5 }} />}
 
-      { showPlaidError && (
+      {showPlaidError && (
         <FormErrorsCaption sx={{ mt: 2 }}>
-          { withInvalidConnection({ label: "Plaid" }) }
+          {withInvalidConnection({ label: "Plaid" })}
         </FormErrorsCaption>
-      ) }
+      )}
 
-      { debug && (
+      {debug && (
         <DebugBox sx={{ mt: 5 }}>
-          { JSON.stringify(watch(), null, 2) }
-          { "\n\n" }
-          { JSON.stringify(formState.errors, null, 2) }
-          { "\n\n" }
-          { JSON.stringify(limits, null, 2) }
+          {JSON.stringify(watch(), null, 2)}
+          {"\n\n"}
+          {JSON.stringify(formState.errors, null, 2)}
+          {"\n\n"}
+          {JSON.stringify(limits, null, 2)}
         </DebugBox>
-      ) }
+      )}
 
       <CheckoutModalFooter
-        variant={ selectedPaymentMethod === "ACH" ? "toPlaid" : "toConfirmation" }
-        consentType={ consentType === "checkbox" ? undefined : consentType }
-        submitLabel={ loadingItemLimits ? "Verifying purchase..." : undefined }
-        submitDisabled={ showPlaidError || loadingItemLimits || !!limitExceededMessage }
-        submitLoading={ plaidLoading || loadingItemLimits }
-        onCloseClicked={ onClose } />
+        variant={selectedPaymentMethod === "ACH" ? "toPlaid" : "toConfirmation"}
+        consentType={consentType === "checkbox" ? undefined : consentType}
+        submitLabel={loadingItemLimits ? "Verifying purchase..." : undefined}
+        submitDisabled={showPlaidError || loadingItemLimits || !!limitExceededMessage}
+        submitLoading={plaidLoading || loadingItemLimits}
+        onCloseClicked={onClose} />
     </form>
   );
 };

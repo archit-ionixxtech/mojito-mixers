@@ -10,7 +10,7 @@ import { getUrlWithoutParams } from "../domain/url/url.utils";
 import { Wallet } from "../domain/wallet/wallet.interfaces";
 import { filterSpecialWalletAddressValues } from "../domain/wallet/wallet.utils";
 import { BillingInfo } from "../forms/BillingInfoForm";
-import { CreatePaymentMetadataInput, CryptoBillingDetails, useCreatePaymentMutation } from "../queries/graphqlGenerated";
+import { CreatePaymentMetadataInput, CryptoBillingDetails, CryptoPaymentDetails, useCreatePaymentMutation, WirePaymentDetails, WireInstructions } from "../queries/graphqlGenerated";
 import { useCreatePaymentMethod } from "./useCreatePaymentMethod";
 import { useEncryptCardData } from "./useEncryptCard";
 
@@ -39,6 +39,7 @@ export interface FullPaymentState {
   paymentID: string;
   hostedURL: string;
   paymentError?: string | CheckoutModalError;
+  wireInstructions?: WireInstructions
 }
 
 export function useFullPayment({
@@ -258,23 +259,24 @@ export function useFullPayment({
 
       processorPaymentID = makePaymentResult.data?.createPayment?.processorPaymentID || "";
       paymentID = makePaymentResult.data?.createPayment?.id || "";
-      hostedURL = makePaymentResult.data?.createPayment?.details?.hostedURL || "";
+      hostedURL = (makePaymentResult.data?.createPayment?.details as CryptoPaymentDetails)?.hostedURL || "";
     }
 
-    if (!processorPaymentID) {
-      setError(ERROR_PURCHASE_PAYING(mutationError));
+    const wireInstructions = (makePaymentResult?.data?.createPayment?.details as WirePaymentDetails)?.WireInstructions;
 
+    if (!processorPaymentID && (wireInstructions === null || wireInstructions === undefined)) {
+      setError(ERROR_PURCHASE_PAYING(mutationError));
       return;
     }
 
     // TODO: Error handling and automatic retry:
-
     setPaymentState({
       paymentStatus: "processed",
       paymentMethodID,
       processorPaymentID,
       paymentID,
       hostedURL,
+      wireInstructions,
     });
   }, [
     orgID,

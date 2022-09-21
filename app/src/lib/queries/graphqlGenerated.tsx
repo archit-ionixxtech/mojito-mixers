@@ -365,6 +365,11 @@ export type CryptoPaymentDetails = {
   hostedURL: Scalars['String'];
 };
 
+export type WirePaymentDetails = {
+  __typename?: 'WirePaymentDetails';
+  WireInstructions: WireInstructions;
+};
+
 export type CryptoPaymentMethodOutput = {
   __typename?: 'CryptoPaymentMethodOutput';
   id: Scalars['UUID1'];
@@ -2378,7 +2383,7 @@ export type CreatePaymentMutationVariables = Exact<{
 }>;
 
 
-export type CreatePaymentMutation = { __typename?: 'Mutation', createPayment: { __typename?: 'PaymentOutput', id: any, invoiceID: any, processorPaymentID: string, status: PaymentStatus, userID: any, details?: { __typename?: 'CryptoPaymentDetails', hostedURL: string } | null } };
+export type CreatePaymentMutation = { __typename?: 'Mutation', createPayment: { __typename?: 'PaymentOutput', id: any, invoiceID: any, processorPaymentID: string, status: PaymentStatus, userID: any, details?: { __typename?: 'CryptoPaymentDetails', hostedURL: string } | { __typename?: 'WirePaymentDetails', WireInstructions: WireInstructions } | null } };
 
 export type CollectionItemByIdQueryVariables = Exact<{
   id: Scalars['UUID1'];
@@ -2544,6 +2549,26 @@ export const CreatePaymentDocument = gql`
     details {
       ... on CryptoPaymentDetails {
         hostedURL
+      }
+      ...on  WirePaymentDetails{
+        WireInstructions{
+           trackingRef
+          beneficiary{
+            name
+            address1
+            address2
+          }
+          beneficiaryBank{
+             name
+            swiftCode 
+            routingNumber
+            accountNumber
+            address
+            city
+            postalCode
+            country
+          }
+        }
       }
     }
   }
@@ -2955,6 +2980,29 @@ export const GetPaymentMethodListDocument = gql`
       type
       status
     }
+    ... on WirePaymentMethodOutput {
+      id
+      type
+      status
+      description
+      bankAddress {
+        bankName
+        address1
+        address2
+        country
+        district
+        city
+      }
+      billingDetails {
+        name
+        city
+        country
+        address1
+        address2
+        district
+        postalCode
+      }
+    } 
   }
 }
     `;

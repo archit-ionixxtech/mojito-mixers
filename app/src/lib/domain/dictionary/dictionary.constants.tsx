@@ -35,6 +35,17 @@ export const DEFAULT_DICTIONARY: PUIDictionary = {
   ),
 
   walletMultiSigTooltip,
+  wireConfirmationInstruction: (
+    <>
+      We will process your payment as soon as we receive your deposit. You will 
+      receive an email with the status of your payment once it has been processed.
+      <br/><br/>
+      Please note that wire transfers usually take 1-3 business days to arrive. We do not 
+      charge any deposit fee — however, your bank may charge you a wire transfer fee.
+      <br/><br/>
+      You can able to customize your NFT on teamlab once you transfer your NFT to 
+      your personal wallet.
+    </>),
 
   wirePaymentsDisclaimer: [(
     <>

@@ -30,6 +30,9 @@ export function getFormattedPaymentMethod(paymentMethodInfo: PaymentMethod | Sav
     } else if (paymentMethodInfo.type === "Crypto") {
       paymentType = "Crypto";
       displayValue = `${ paymentMethodInfo.id }`;
+    } else if (paymentMethodInfo.type === "Wire") {
+      paymentType = "Wire";
+      displayValue = `${ paymentMethodInfo.id }`;
     }
   } else if (paymentMethodInfo) {
     if ((paymentMethodInfo as CreditCard).hasOwnProperty("cardNumber")) {

@@ -5,7 +5,7 @@ import { CircleError, CircleFieldError, RawSavedPaymentMethod, SavedPaymentMetho
 import { BillingInfo } from "../../forms/BillingInfoForm";
 import { formatSentence, fullTrim } from "../../utils/formatUtils";
 import { BUILT_IN_ERRORS } from "../errors/errors.constants";
-import { AchBillingDetails, CreditCardBillingDetails, CryptoBillingDetails } from "../../queries/graphqlGenerated";
+import { AchBillingDetails, CreditCardBillingDetails, CryptoBillingDetails, WireBillingDetails } from "../../queries/graphqlGenerated";
 import { PaymentType } from "../payment/payment.interfaces";
 
 const countryPrefixes = customList("countryCode", "{countryCallingCode}");
@@ -58,8 +58,8 @@ export function transformRawSavedPaymentMethods(rawSavedPaymentMethods: RawSaved
       !billingDetails ||
       !metadata ||
       !billingDetails.name ||
-      !billingDetails.address1 ||
-      !metadata.email
+      !billingDetails.address1
+      // !metadata.email
     )) return null;
 
     // Find country by short code:
@@ -132,7 +132,7 @@ export function billingInfoToSavedPaymentMethodBillingInfo(billingInfo: BillingI
   };
 }
 
-export function billingInfoToBillingDetails<T extends CreditCardBillingDetails | AchBillingDetails | CryptoBillingDetails = CreditCardBillingDetails>(
+export function billingInfoToBillingDetails<T extends CreditCardBillingDetails | AchBillingDetails | CryptoBillingDetails | WireBillingDetails = CreditCardBillingDetails>(
   billingInfo: BillingInfo,
   paymentType: PaymentType = "CreditCard",
 ): T {
@@ -146,7 +146,7 @@ export function billingInfoToBillingDetails<T extends CreditCardBillingDetails |
   } as T;
 
   if (paymentType !== "Crypto") {
-    (billingDetails as CreditCardBillingDetails | AchBillingDetails).name = fullTrim(billingInfo.fullName);
+    (billingDetails as CreditCardBillingDetails | AchBillingDetails | WireBillingDetails).name = fullTrim(billingInfo.fullName);
   }
 
   return billingDetails;

@@ -2442,7 +2442,7 @@ export type GetPaymentMethodListQueryVariables = Exact<{
 }>;
 
 
-export type GetPaymentMethodListQuery = { __typename?: 'Query', getPaymentMethodList: Array<{ __typename?: 'ACHPaymentMethodOutput', id: any, type: PaymentType, status: string, accountNumber: string, metadata?: { __typename?: 'ACHMetadataOutput', email: string, phoneNumber: string } | null, billingDetails?: { __typename?: 'ACHBillingDetailsOutput', name: string, city: string, country: string, address1: string, address2: string, district: string, postalCode: string } | null, bankAddress?: { __typename?: 'ACHBankAddressOutput', bankName: string } | null } | { __typename?: 'CreditCardPaymentMethodOutput', id: any, type: PaymentType, status: string, network: string, last4Digit: string, metadata?: { __typename?: 'CreditCardMetadataOutput', email: string, phoneNumber: string } | null, billingDetails?: { __typename?: 'CreditCardBillingDetailsOutput', name: string, city: string, country: string, address1: string, address2: string, district: string, postalCode: string } | null } | { __typename?: 'CryptoPaymentMethodOutput', id: any, type: PaymentType, status: string } | { __typename?: 'WirePaymentMethodOutput' }> };
+export type GetPaymentMethodListQuery = { __typename?: 'Query', getPaymentMethodList: Array<{ __typename?: 'ACHPaymentMethodOutput', id: any, type: PaymentType, status: string, accountNumber: string, metadata?: { __typename?: 'ACHMetadataOutput', email: string, phoneNumber: string } | null, billingDetails?: { __typename?: 'ACHBillingDetailsOutput', name: string, city: string, country: string, address1: string, address2: string, district: string, postalCode: string } | null, bankAddress?: { __typename?: 'ACHBankAddressOutput', bankName: string } | null } | { __typename?: 'CreditCardPaymentMethodOutput', id: any, type: PaymentType, status: string, network: string, last4Digit: string, metadata?: { __typename?: 'CreditCardMetadataOutput', email: string, phoneNumber: string } | null, billingDetails?: { __typename?: 'CreditCardBillingDetailsOutput', name: string, city: string, country: string, address1: string, address2: string, district: string, postalCode: string } | null } | { __typename?: 'CryptoPaymentMethodOutput', id: any, type: PaymentType, status: string } | { __typename?: 'WirePaymentMethodOutput', id: any, type: PaymentType, status: string, bankAddress: WireBankAddress, billingDetails: WireBillingDetails}> };
 
 export type CreatePaymentMethodMutationVariables = Exact<{
   orgID: Scalars['UUID1'];
@@ -2960,6 +2960,29 @@ export const GetPaymentMethodListDocument = gql`
       type
       status
     }
+    ... on WirePaymentMethodOutput {
+      id
+      type
+      status
+      description
+      bankAddress {
+        bankName
+        address1
+        address2
+        country
+        district
+        city
+      }
+      billingDetails {
+        name
+        city
+        country
+        address1
+        address2
+        district
+        postalCode
+      }
+    } 
   }
 }
     `;

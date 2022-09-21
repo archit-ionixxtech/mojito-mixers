@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { FetchResult, MutationResult } from "@apollo/client";
-import { CreatePaymentMethodMutation, PaymentType, useCreatePaymentMethodMutation, AchMetadata, CreditCardMetadata, CreditCardBillingDetails, useGetPaymentMethodStatusLazyQuery, AchBillingDetails } from "../queries/graphqlGenerated";
+import { CreatePaymentMethodMutation, PaymentType, useCreatePaymentMethodMutation, AchMetadata, CreditCardMetadata, CreditCardBillingDetails, useGetPaymentMethodStatusLazyQuery, AchBillingDetails, WireBillingDetails } from "../queries/graphqlGenerated";
 import { BillingInfo } from "../forms/BillingInfoForm";
 import { PaymentMethod } from "../domain/payment/payment.interfaces";
 import { useEncryptCardData } from "./useEncryptCard";
@@ -89,6 +89,25 @@ export function useCreatePaymentMethod({
           orgID,
           input: {
             paymentType: PaymentType.Crypto,
+          },
+        },
+      });
+    } else if (paymentInfo.type === PaymentType.Wire) {
+      const country = paymentInfo.bankCountry.value || "";
+      createPaymentMethodPromise = createPaymentMethod({
+        variables: {
+          orgID,
+          input: {
+            paymentType: PaymentType.Wire,
+            wireData: {
+              accountNumber: paymentInfo.accountNumber,
+              routingNumber: paymentInfo.routingNumber,
+              bankAddress: {
+                bankName: paymentInfo.bankName,
+                country,
+              },
+              billingDetails: billingInfoToBillingDetails<WireBillingDetails>(billingInfo),
+            },
           },
         },
       });

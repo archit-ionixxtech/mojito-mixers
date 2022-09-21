@@ -1,5 +1,5 @@
 import { SelectOption } from "../../components/shared/Select/Select";
-import { CreditCardBillingDetails, CreditCardMetadata, AchBillingDetails, AchMetadata } from "../../queries/graphqlGenerated";
+import { CreditCardBillingDetails, CreditCardMetadata, AchBillingDetails, AchMetadata, WireBillingDetails, WireBankAddress } from "../../queries/graphqlGenerated";
 import { PaymentType } from "../payment/payment.interfaces";
 
 export type PaymentMethodStatus = "pending" | "complete" | "failed";
@@ -31,7 +31,16 @@ export interface RawSavedPaymentMethodCrypto {
   metadata: undefined;
 }
 
-export type RawSavedPaymentMethod = (RawSavedPaymentMethodCC | RawSavedPaymentMethodACH | RawSavedPaymentMethodCrypto) & { type: PaymentType };
+export interface RawSavedPaymentMethodWire {
+  id: string;
+  type: "Wire";
+  status: PaymentMethodStatus;
+  billingDetails: WireBillingDetails;
+  bankAddress: WireBankAddress;
+  metadata: undefined;
+}
+
+export type RawSavedPaymentMethod = (RawSavedPaymentMethodCC | RawSavedPaymentMethodACH | RawSavedPaymentMethodCrypto | RawSavedPaymentMethodWire) & { type: PaymentType };
 
 export interface CommonSavedPaymentMethodBillingDetails {
   name: string;
@@ -65,7 +74,8 @@ export type GenericSavedPaymentMethod<R extends RawSavedPaymentMethod> = Omit<R,
 export type SavedPaymentMethodCC = GenericSavedPaymentMethod<RawSavedPaymentMethodCC>;
 export type SavedPaymentMethodACH = GenericSavedPaymentMethod<RawSavedPaymentMethodACH>;
 export type SavedPaymentMethodCrypto = GenericSavedPaymentMethod<RawSavedPaymentMethodCrypto>;
-export type SavedPaymentMethod = SavedPaymentMethodCC | SavedPaymentMethodACH | SavedPaymentMethodCrypto;
+export type SavedPaymentMethodWire = GenericSavedPaymentMethod<RawSavedPaymentMethodWire>;
+export type SavedPaymentMethod = SavedPaymentMethodCC | SavedPaymentMethodACH | SavedPaymentMethodCrypto | SavedPaymentMethodWire;
 export type SavedPaymentMethodBillingInfo = Pick<SavedPaymentMethod, "billingDetails" | "metadata">;
 
 export interface CircleFieldError {

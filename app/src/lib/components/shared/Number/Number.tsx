@@ -1,7 +1,9 @@
+import { SxProps, Theme } from "@mui/system";
 import React from "react";
 
 interface NumberProps {
   as?: React.ElementType;
+  sx?: SxProps<Theme>;
   children: number;
   prefix?: string;
   suffix?: string;
@@ -9,6 +11,7 @@ interface NumberProps {
 
 export const Number: React.FC<NumberProps> = ({
   as: Wrapper = "span",
+  sx,
   children,
   prefix = "",
   suffix = "",
@@ -19,6 +22,6 @@ export const Number: React.FC<NumberProps> = ({
   });
 
   return (
-    <Wrapper>{ `${ prefix }${ numberFormat.format(children).replace(/[.,']00$/, "") }${ suffix }` }</Wrapper>
+    <Wrapper sx={ sx }>{ `${ prefix }${ numberFormat.format(children).replace(/[.,']00$/, "") }${ suffix }` }</Wrapper>
   );
 };

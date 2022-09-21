@@ -8,13 +8,14 @@ import { PaymentType, PaymentMethod, FiatCurrency, CryptoCurrency } from "../../
 import { CheckoutEventData, CheckoutEventType } from "../../../domain/events/events.interfaces";
 import { CheckoutItemInfo } from "../../../domain/product/product.interfaces";
 import { BillingInfo } from "../../../forms/BillingInfoForm";
-import { useDeletePaymentMethodMutation, useGetInvoiceDetailsQuery, useGetPaymentMethodListQuery, useMeQuery, useReleaseReservationBuyNowLotMutation } from "../../../queries/graphqlGenerated";
+import { useDeletePaymentMethodMutation, useGetInvoiceDetailsQuery, useGetPaymentMethodListQuery, useMeQuery, useReleaseReservationBuyNowLotMutation, WireInstructions } from "../../../queries/graphqlGenerated";
 import { AuthenticationView } from "../../../views/Authentication/AuthenticationView";
 import { BillingView } from "../../../views/Billing/BillingView";
 import { ConfirmationView } from "../../../views/Confirmation/ConfirmationView";
+import { WireConfirmationView } from "../../../views/Confirmation/WireConfirmationView";
 import { PaymentView } from "../../../views/Payment/PaymentView";
 import { CheckoutModalHeader, CheckoutModalHeaderVariant } from "../../payments/CheckoutModalHeader/CheckoutModalHeader";
-import { PurchasingView } from "../../../views/Purchasing/PurchasingView";
+import { PurchasingView, PurchasDetails } from "../../../views/Purchasing/PurchasingView";
 import { ErrorView } from "../../../views/Error/ErrorView";
 import { RawSavedPaymentMethod } from "../../../domain/circle/circle.interfaces";
 import { continuePlaidOAuthFlow, PlaidFlow } from "../../../hooks/usePlaid";
@@ -166,7 +167,7 @@ export const PUICheckoutOverlay: React.FC<PUICheckoutOverlayProps> = ({
   onError,
 }) => {
   const [debug, setDebug] = useState(!!parentDebug);
-
+  const [wireInstructions, setWireInstructions] = useState<WireInstructions>();
   // Initialization, just to prevent issues with Next.js' SSR:
 
   useEffect(() => {
@@ -302,7 +303,6 @@ export const PUICheckoutOverlay: React.FC<PUICheckoutOverlayProps> = ({
 
   const rawSavedPaymentMethods = paymentMethodsData?.getPaymentMethodList;
   const savedPaymentMethods = useMemo(() => transformRawSavedPaymentMethods(rawSavedPaymentMethods as RawSavedPaymentMethod[]), [rawSavedPaymentMethods]);
-
   const invoiceItems = invoiceDetailsData?.getInvoiceDetails.items;
   const destinationAddress = (invoiceItems || [])?.[0]?.destinationAddress || NEW_WALLET_OPTION.value;
 
@@ -599,8 +599,14 @@ export const PUICheckoutOverlay: React.FC<PUICheckoutOverlayProps> = ({
 
   // Purchase:
 
-  const handlePurchaseSuccess = useCallback(async (nextCirclePaymentID: string, nextPaymentID:string, redirectURL: string) => {
+  const handlePurchaseSuccess = useCallback(async (purchasDetails: PurchasDetails) => {
+    const { redirectURL } = purchasDetails;
+    const nextCirclePaymentID = purchasDetails.processorPaymentID;
+    const nextPaymentID = purchasDetails.paymentID;
+
     setPayments(nextCirclePaymentID, nextPaymentID);
+    setWireInstructions(purchasDetails.wireInstructions);
+    if (debug) console.log("Checkout Payment success page ", { nextCirclePaymentID, nextPaymentID, redirectURL, wireInstruction: purchasDetails.wireInstructions });
 
     setTimeout(() => triggerAnalyticsEventRef.current("event:paymentSuccess"));
 
@@ -944,19 +950,28 @@ export const PUICheckoutOverlay: React.FC<PUICheckoutOverlayProps> = ({
     );
   } else if (checkoutStep === "confirmation") {
     headerVariant = "logoOnly";
-
-    checkoutStepElement = (
-      <ConfirmationView
-        checkoutItems={ checkoutItems }
-        displayCurrency={ displayCurrency }
-        cryptoCurrencies={ cryptoCurrencies }
-        savedPaymentMethods={ savedPaymentMethods }
-        selectedPaymentMethod={ selectedPaymentMethod }
-        processorPaymentID={ processorPaymentID }
-        wallet={ wallet }
-        onNext={ handlePurchaseCompleted }
-        onGoTo={ handleGoTo } />
-    );
+    if (wireInstructions) {
+      checkoutStepElement = (
+        <WireConfirmationView
+          wireInstructions={ wireInstructions }
+          checkoutItems={ checkoutItems }
+          wallet={ wallet }
+          onNext={ handlePurchaseCompleted } />
+      );
+    } else {
+      checkoutStepElement = (
+        <ConfirmationView
+          checkoutItems={ checkoutItems }
+          displayCurrency={ displayCurrency }
+          cryptoCurrencies={ cryptoCurrencies }
+          savedPaymentMethods={ savedPaymentMethods }
+          selectedPaymentMethod={ selectedPaymentMethod }
+          processorPaymentID={ processorPaymentID }
+          wallet={ wallet }
+          onNext={ handlePurchaseCompleted }
+          onGoTo={ handleGoTo } />
+      );
+    }
   } else {
     console.warn("Unknown checkoutStepElement!");
 

@@ -56,7 +56,7 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({
       label={ label }
       options={ options }
       onChange={ handleChange }
-      value={ optionsMap[selectedValue] ? selectedValue : "" }
+      value={ optionsMap[selectedValue] ? selectedValue : ""}
       disabled={ isDisabled } />
   );
 };
@@ -82,17 +82,18 @@ export function ControlledCountrySelector <TFieldValues = any, TContext = any>({
 
         return (
           <CountrySelector
-            id={ name }
-            name={ name }
-            value={ isSelectOption(value) ? value : EMPTY_OPTION }
-            autoComplete="country"
-            label={ label }
-            onSelectCountry={ onChange }
-            onBlur={ onBlur }
-            fullWidth
-            inputRef={ ref }
-            error={ !!fieldError }
-            helperText={ fieldError } />
+          id={ name }
+          name={ name }
+          value={ isSelectOption(value) ? value : EMPTY_OPTION}
+          disabled={ disabled }
+          autoComplete="country"
+          label={label}
+          onSelectCountry={ onChange }
+          onBlur={ onBlur }
+          fullWidth
+          inputRef={ ref }
+          error={ !!fieldError }
+          helperText={ fieldError } />
         );
       } } />
   );

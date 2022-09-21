@@ -7,13 +7,20 @@ import { CheckoutModalError, SelectedPaymentMethod } from "../../components/publ
 import { ERROR_PURCHASE_TIMEOUT } from "../../domain/errors/errors.constants";
 import { XS_MOBILE_MAX_WIDTH } from "../../config/theme/themeConstants";
 import { StatusIcon } from "../../components/shared/StatusIcon/StatusIcon";
-import { useGetPaymentNotificationQuery } from "../../queries/graphqlGenerated";
+import { useGetPaymentNotificationQuery, WireInstructions } from "../../queries/graphqlGenerated";
 import { persistCheckoutModalInfo } from "../../components/public/CheckoutOverlay/CheckoutOverlay.utils";
 import { PAYMENT_NOTIFICATION_INTERVAL_MS, PURCHASING_MESSAGES_DEFAULT, PURCHASING_MIN_WAIT_MS, PURCHASING_MESSAGES_INTERVAL_MS, PAYMENT_CREATION_TIMEOUT_MS, DEV_SKIP_PAYMENT_REDIRECT_IN_LOCALHOST } from "../../config/config";
 import { isLocalhost } from "../../domain/url/url.utils";
 import { Wallet } from "../../domain/wallet/wallet.interfaces";
 import { CheckoutItem } from "../../domain/product/product.interfaces";
 import { usePromoCode } from "../../utils/promoCodeUtils";
+
+export interface PurchasDetails {
+  processorPaymentID: string;
+  paymentID: string;
+  redirectURL: string;
+  wireInstructions?: WireInstructions;
+}
 
 export interface PurchasingViewProps {
   threeDSEnabled?: boolean;
@@ -28,7 +35,7 @@ export interface PurchasingViewProps {
   savedPaymentMethods: SavedPaymentMethod[];
   selectedPaymentMethod: SelectedPaymentMethod;
   wallet: null | string | Wallet;
-  onPurchaseSuccess: (processorPaymentID: string, paymentID: string, redirectURL: string) => void;
+  onPurchaseSuccess: (purchasDetails: PurchasDetails) => void;
   onPurchaseError: (error?: string | CheckoutModalError) => void;
   onDialogBlocked: (blocked: boolean) => void;
   debug?: boolean;
@@ -58,8 +65,8 @@ export const PurchasingView: React.FC<PurchasingViewProps> = ({
   const isCreditCardPayment = (paymentType === "CreditCard" && cvv) ||
     (paymentInfo && typeof paymentInfo === "object" && paymentInfo.type === "CreditCard");
 
-  const isCryptoPayment = (paymentType === "Crypto") ||
-    (paymentInfo && typeof paymentInfo === "object" && paymentInfo.type === "Crypto");
+  // const isCryptoPayment = (paymentType === "Crypto") ||
+  //   (paymentInfo && typeof paymentInfo === "object" && paymentInfo.type === "Crypto");
 
 
   // Minimum wait time:
@@ -108,6 +115,7 @@ export const PurchasingView: React.FC<PurchasingViewProps> = ({
   const receivedRedirectURL = paymentNotificationResult.data?.getPaymentNotification?.message?.redirectURL || "";
 
   useEffect(() => {
+    if (debug) console.log("👀 skipPaymentNotificationRedirect =", skipPaymentNotificationRedirect);
     if (skipPaymentNotificationRedirect) return;
 
     setRedirectURL((prevRedirectURL) => {
@@ -124,13 +132,11 @@ export const PurchasingView: React.FC<PurchasingViewProps> = ({
 
   useEffect(() => {
     const { hostedURL } = fullPaymentState;
-
-    if (hostedURL && paymentType === "Coinbase") {
-      if (debug) console.log(`  👀 hostedURL = ${ hostedURL }`);
-
+    if (debug) console.log(" 👀 hostedURL =", hostedURL);
+    if (hostedURL) {
       setRedirectURL(hostedURL);
     }
-  }, [fullPaymentState, paymentType, debug]);
+  }, [fullPaymentState, debug]);
 
 
   // Triggers for payment mutation and onPurchaseSuccess/onPurchaseError callbacks:
@@ -147,21 +153,20 @@ export const PurchasingView: React.FC<PurchasingViewProps> = ({
   }, redirectURL === null ? null : PAYMENT_CREATION_TIMEOUT_MS, [onPurchaseError]);
 
   useEffect(() => {
-    if (fullPaymentCalledRef.current || isCryptoPayment) return;
+    if (debug) console.log("  👀 fullPayment = ", fullPaymentCalledRef.current);
+
+    if (fullPaymentCalledRef.current) return;
 
     fullPaymentCalledRef.current = true;
 
     fullPayment(promoCode.id);
-  }, [isCryptoPayment, fullPayment, promoCode]);
-
-  useTimeout(() => {
-    // TODO: Do we need to call any of the payment mutations for crypto payments as well?
-    onPurchaseSuccess("<PAYMENT PROCESSOR ID>", "<PAYMENT ID>", "");
-  }, isCryptoPayment ? 5000 : null);
+  }, [fullPayment, promoCode, debug]);
 
   useEffect(() => {
-    const { paymentStatus, paymentMethodID, processorPaymentID, paymentID, paymentError } = fullPaymentState;
-
+    const { paymentStatus, paymentMethodID, processorPaymentID, paymentID, paymentError, hostedURL, wireInstructions } = fullPaymentState;
+    if (debug) {
+      console.log("  💳 paymentStatus==", paymentStatus);
+    }
     if (paymentStatus === "processing") {
       onDialogBlocked(true);
 
@@ -192,8 +197,16 @@ export const PurchasingView: React.FC<PurchasingViewProps> = ({
         checkoutItems,
       });
     }
-
-    onPurchaseSuccess(processorPaymentID, paymentID, skipRedirect ? "" : (redirectURL || ""));
+    if (debug) {
+      console.log("  💳 onPurchaseSuccess", {
+        processorPaymentID,
+        paymentID,
+        redirectURL,
+        hostedURL,
+      });
+    }
+    const redirectURLValue = (redirectURL || "");
+    onPurchaseSuccess({ processorPaymentID, paymentID, redirectURL: redirectURLValue, wireInstructions });
   }, [
     fullPaymentState,
     hasWaited,

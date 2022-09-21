@@ -2,7 +2,7 @@ import { Typography } from "@mui/material";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import React from "react";
 import Icon from "@mdi/react";
-import { mdiEthereum } from "@mdi/js";
+import { mdiEthereum, mdiTransfer } from "@mdi/js";
 import { SavedPaymentMethod } from "../../../../domain/circle/circle.interfaces";
 import { CreditCardIcon } from "../../../shared/Icons/Icons";
 import { ACH_MASK_PREFIX, CREDIT_CARD_MASK_PREFIX, EXPIRATION_DATE_MASK } from "../../../../domain/payment/payment.constants";
@@ -37,6 +37,14 @@ export const PaymentDetailsFragment: React.FC<PaymentDetailsFragmentProps> = ({
     return (
       <>
         <Icon path={ mdiEthereum } size="24px" />
+        <Typography>{ savedPaymentMethod.id }</Typography>
+      </>
+    );
+  }
+  if (savedPaymentMethod.type === "Wire") {
+    return (
+      <>
+        <Icon path={ mdiTransfer } size="24px" />
         <Typography>{ savedPaymentMethod.id }</Typography>
       </>
     );

@@ -54,6 +54,29 @@ query GetPaymentMethodList($orgID: UUID1!) {
      	type
     	status
     }
+     ... on WirePaymentMethodOutput {
+      id
+      type
+      status
+      description
+      bankAddress {
+        bankName
+        address1
+        address2
+        country
+        district
+        city
+      }
+      billingDetails {
+        name
+        city
+        country
+        address1
+        address2
+        district
+        postalCode
+      }
+    } 
   }
 }
 

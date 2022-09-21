@@ -5,6 +5,7 @@ export type PUIDictionary = {
   walletInfo: PUIDictionarySingleLine;
   walletMultiSigTooltip: PUIDictionarySingleLine;
 
+  wireConfirmationInstruction: PUIDictionarySingleLine;
   wirePaymentsDisclaimer: PUIDictionaryMultiLine;
   purchaseInstructions: PUIDictionaryMultiLine;
 
